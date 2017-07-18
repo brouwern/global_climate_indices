@@ -1,5 +1,5 @@
 ---
-title: "Southern Oscillation Index Download and Prep"
+title: "Southern Oscillation Index (SOI) Download and Process"
 author: "brouwern@gmail.com"
 date: "July 5, 2017"
 output: html_document
@@ -16,6 +16,9 @@ This script downloads and prepares the Southern Oscillation Index (SOI).
 
 * SOI data are monthly
 * Raw data must be processed to extact year from month
+* Data are summarized by
+    + Season
+    + Year
 
 ## Background
 
@@ -129,9 +132,9 @@ SOI.months.wide <- dcast(data = SOI.all.yrs.2,
       value.var = "Value",
       fun.aggregate = sum)
 
-winter.means <- apply(SOI.months.wide[,c("01","02","03")],1,mean)
-spring.means <- apply(SOI.months.wide[,c("04","05","06")],1,mean)
-summer.means <- apply(SOI.months.wide[,c("07","08","09")],1,mean)
+winter.means <- apply(SOI.months.wide[,c("1","2","3")],1,mean)
+spring.means <- apply(SOI.months.wide[,c("4","5","6")],1,mean)
+summer.means <- apply(SOI.months.wide[,c("7","8","9")],1,mean)
 fall.means <- apply(SOI.months.wide[,c("10","11","12")],1,mean)
 
 SOI.seasonal.means <- data.frame(yr = SOI.months.wide$yr,
