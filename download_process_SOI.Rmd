@@ -1,0 +1,235 @@
+---
+title: "Southern Oscillation Index Download and Prep"
+author: "brouwern@gmail.com"
+date: "July 5, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+This script downloads and prepares the Southern Oscillation Index (SOI).
+
+
+* SOI data are monthly
+* Raw data must be processed to extact year from month
+
+## Background
+
+Wolfe et al 2015 in Oecologia write:
+"We used the Southern Oscillation Index (SOI) to measure the strength of ENSO phases (El Niño and La Niña collectively) in northeastern Costa Rica. SOI is calculated using sea level pressure differences between Tahiti and Darwin, Australia, and is administered by the National
+Oceanic and Atmospheric Administration (NOAA) to provide a long-term ENSO index for research purposes. Generally, SOI values above 1 and below −1 indicate La Niña (wet) and El Niño (dry) conditions, respectively, in our study area... averaged annual SOI values were employed as time trends within models ... All three top models contained an El Niño Southern Oscillation metric (SOI) associated with manakin survival in young forest ... SOI accounted for 79 % of the variation among manakin survival in young forest coupled with widely varying estimates during major El Niño and La Niña events (1997 and 1999; Fig. 1)"
+
+Citation:
+Wolfe et al 2015.  Changes in the apparent survival of a tropical bird in response to the El Niño Southern Oscillation in mature and young forest
+in Costa Rica.  Oecologia.
+
+
+
+For a summary of strong El ninos vs. la ninas see
+http://ggweather.com/enso/oni.htm
+(based on ONI, Oceanic Nino index, not SOI)
+
+## Libraries
+```{r}
+library(data.table) #for download
+library(reshape2)   #calc. annual mean
+library(ggplot2)
+library(rprojroot)  #working directory management
+```
+
+
+## Set up root diretory
+```{r}
+root <- rprojroot::is_rstudio_project
+```
+
+
+
+## Download monthly SOI data 
+
+* Downnload from web using data.table::fread()
+* Data is updated regularly
+
+```{r}
+SOI.all.yrs <- fread('https://www.ncdc.noaa.gov/teleconnections/enso/indicators/soi/data.csv')
+```
+
+
+## Look at data
+
+SOI data are monthly.
+
+```{r}
+head(SOI.all.yrs)
+plot(Value ~ Date, data = SOI.all.yrs)
+abline(h = 1, col = 3)
+abline(h = -1, col = 2)
+```
+
+
+## Clean SOI data
+
+SOI has year and month concatenated into a single column.
+
+```{r}
+#Extract year
+SOI.all.yrs$yr <- gsub("^([12][1-90][1-90][1-90])(.*)",
+                 "\\1",SOI.all.yrs$Date)
+
+
+SOI.all.yrs$yr <- as.numeric(SOI.all.yrs$yr)
+
+#Extract month
+SOI.all.yrs$mo <- gsub("^([12][1-90][1-90][1-90])(.*)",
+                 "\\2",SOI.all.yrs$Date)
+
+```
+
+## Save full time series
+
+```{r}
+#Determine year range
+year <- paste(range(SOI.all.yrs$yr),collapse = "_")
+
+#create filename
+file. <- paste("climate_index_SOI_", year, ".csv", sep = "")
+dir.  <- "./data/data_out"
+file. <- paste(dir.,file.,sep = "/")
+
+write.csv(SOI.all.yrs, file = file.)
+```
+
+Reload data
+```{r}
+SOI.all.yrs <- read.csv(file.)
+```
+
+
+
+## Cacluate quarterly mean SOI
+
+Remove current year since it will most likely be incomplete
+```{r}
+yr.current <- max(SOI.all.yrs$yr)
+i.yr.current <- which(SOI.all.yrs$yr == yr.current)
+SOI.all.yrs.2 <- SOI.all.yrs[-i.yr.current,]
+
+```
+
+
+Reshape by month
+```{r}
+#calc mean
+SOI.months.wide <- dcast(data = SOI.all.yrs.2,
+      formula = yr ~ mo,
+      value.var = "Value",
+      fun.aggregate = sum)
+
+winter.means <- apply(SOI.months.wide[,c("01","02","03")],1,mean)
+spring.means <- apply(SOI.months.wide[,c("04","05","06")],1,mean)
+summer.means <- apply(SOI.months.wide[,c("07","08","09")],1,mean)
+fall.means <- apply(SOI.months.wide[,c("10","11","12")],1,mean)
+
+SOI.seasonal.means <- data.frame(yr = SOI.months.wide$yr,
+           SOI.mean.win = winter.means,
+           SOI.mean.spr = spring.means,
+           SOI.mean.sum = summer.means,
+           SOI.mean.fal = fall.means)
+
+```
+
+
+```{r}
+#Determine year range
+year <- paste(range(SOI.seasonal.means$yr),collapse = "_")
+
+#create filename
+file. <- paste("climate_index_SOI_seasonal_summary", year, ".csv", sep = "")
+file. <- paste(dir.,file., sep = "/")
+write.csv(SOI.seasonal.means, file = file.)
+```
+
+
+
+
+
+## Calculate annual mean SOI
+
+
+Calculate overall mean for each year
+```{r}
+#calc mean
+SOI.mean <- dcast(data = SOI.all.yrs.2,
+      formula = yr ~ .,
+      value.var = "Value",
+      fun.aggregate = mean)
+
+#assign name
+names(SOI.mean)[2] <- "SOI.mean"
+
+#calc max
+SOI.max <- dcast(data = SOI.all.yrs.2,
+      formula = yr ~ .,
+      value.var = "Value",
+      fun.aggregate = max)
+
+names(SOI.max)[2] <- "SOI.max"
+
+
+#calc min
+SOI.min <- dcast(data = SOI.all.yrs.2,
+      formula = yr ~ .,
+      value.var = "Value",
+      fun.aggregate = min)
+
+names(SOI.min)[2] <- "SOI.min"
+
+
+```
+
+
+Compile summaries
+
+```{r}
+SOI.ann.summary <- merge(SOI.mean, SOI.max)
+SOI.ann.summary <- merge(SOI.ann.summary, SOI.min)
+
+```
+
+
+### Plot Annual means data
+
+```{r}
+i.yr <- which(SOI.ann.summary$yr > 1995)
+
+qplot(y = SOI.mean,
+      x = yr,
+      data = SOI.ann.summary[i.yr,]) + 
+  geom_line()+
+  geom_point(aes(y = SOI.max,
+                 x = yr), col = 3) +
+  geom_point(aes(y = SOI.min,
+                 x = yr), col = 2) +
+  geom_hline(yintercept = 1, col = 3) +
+  geom_hline(yintercept = -1, col = 2)
+```
+
+
+
+### Save annual means
+
+```{r}
+#Determine year range
+year <- paste(range(SOI.ann.summary$yr),collapse = "_")
+
+#create filename
+file. <- paste("climate_index_SOI_ann_summary", year, ".csv", sep = "")
+file. <- paste(dir.,file., sep = "/")
+write.csv(SOI.ann.summary, file = file.)
+
+```
+
