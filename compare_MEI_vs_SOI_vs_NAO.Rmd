@@ -1,0 +1,56 @@
+---
+title: "Comparing MEI and SOI"
+author: "brouwern@gmail.com"
+date: "July 5, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+Compare three different global climate indices, MEI and SOI.
+
+
+## Load data
+
+```{r}
+dir. <- "./data/data_out"
+list.files(path = dir.)
+
+soi.file <- "climate_index_SOI_ann_summary1951_2016.csv"
+mei.file <- "climate_index_MEI_annual_summary1950_2016.csv"
+noa.file <- "climate_index_NOA_annual_summary1950_2016.csv"
+
+files. <- paste(dir.,c(soi.file,mei.file,noa.file), sep = "/")
+soi <- read.csv(files.[1])
+mei <- read.csv(files.[2])
+noa <- read.csv(files.[3])
+
+rbind(names(soi),
+      names(mei),
+      names(noa))
+
+```
+
+
+## Merge SOI and MEI
+
+```{r}
+elnino.indices <- merge(soi, mei)
+elnino.indices <- merge(elnino.indices, noa)
+
+head(elnino.indices)
+```
+
+Compare SOI and MEI
+```{r}
+par(mfrow = c(2,2))
+plot(SOI.mean ~ MEI.ann.mean, data = elnino.indices )
+plot(MEI.ann.mean ~ NAO.ann.mean, data = elnino.indices )
+plot(SOI.mean ~ NAO.ann.mean, data = elnino.indices )
+
+```
+

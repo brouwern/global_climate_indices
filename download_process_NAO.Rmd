@@ -1,0 +1,117 @@
+---
+title: "Download and Process North Atlantic Oscillation"
+author: "brouwern@gmail.com"
+date: "July 18, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+## Introduction
+
+* NAO = north Atlantic Oscillation
+* Monthly values given
+* "A useful winter season is the December to March average of these values (see Osborn et al., 1999), which is shown in the timeseries above. Recent values of the DJFM NAO index are shown below.
+"
+https://crudata.uea.ac.uk/~timo/datapages/naoi.htm
+
+
+
+## Libraries
+```{r}
+library(data.table) #for download
+library(reshape2)   #calc. annual mean
+library(ggplot2)
+```
+
+
+
+
+## Download monthly NAO data 
+
+* Downnload from web using data.table::fread()
+* Data is updated regularly
+* NOTE: last column is the annual mean!
+
+```{r}
+address. <- "https://crudata.uea.ac.uk/cru/data/nao/nao.dat"
+NAO.all.yrs <- fread(address.,)
+```
+
+Remove missing data
+```{r}
+NAfix <- function(x){ifelse(x < -99, NA,x)}
+NAO.all.yrs <- data.frame(apply(NAO.all.yrs,2,NAfix))
+summary(NAO.all.yrs)
+```
+
+### Set up column names
+
+```{r}
+colnames(NAO.all.yrs) <-c("yr",month.abb,"mean")
+```
+
+
+## Calcualte season summaries
+
+```{r}
+winter.means <- apply(NAO.all.yrs[,c("Jan","Feb","Mar")],1,mean)
+spring.means <- apply(NAO.all.yrs[,c("Apr","May","Jun")],1,mean)
+summer.means <- apply(NAO.all.yrs[,c("Jul","Aug","Sep")],1,mean)
+fall.means <- apply(NAO.all.yrs[,c("Oct","Nov","Dec")],1,mean)
+
+
+NAO.seasonal.means <- data.frame(yr = NAO.all.yrs$yr,
+           NAO.mean.win = winter.means,
+           NAO.mean.spr = spring.means,
+           NAO.mean.sum = summer.means,
+           NAO.mean.fal = fall.means)
+```
+
+
+```{r}
+#Determine year range
+year <- paste(range(NAO.seasonal.means$yr),collapse = "_")
+
+#create filename
+file. <- paste("climate_index_SOA_seasonal_summary", year, ".csv", sep = "")
+file. <- paste(dir.,file., sep = "/")
+write.csv(NAO.seasonal.means, file = file., row.names = F)
+```
+
+
+
+
+### Calculate annual summaries
+
+```{r}
+NAO.ann.max <- apply(NAO.all.yrs[,-c(1,14)], 1, max)
+NAO.ann.min <- apply(NAO.all.yrs[,-c(1,14)], 1, min)
+
+```
+
+Compile annual summaries
+
+```{r}
+NAO.ann.summary <- data.frame(yr = NAO.all.yrs$yr,
+           NAO.ann.mean = NAO.all.yrs$mean,
+           NAO.ann.max,
+           NAO.ann.min)
+
+```
+
+
+Save annual summary
+```{r}
+#Determine year range
+year <- paste(range(MEI.ann.summary$yr),collapse = "_")
+
+#create filename
+file. <- paste("climate_index_NOA_annual_summary", year, ".csv", sep = "")
+file. <- paste(dir.,file., sep = "/")
+write.csv(NAO.ann.summary, file = file., row.names = F)
+```

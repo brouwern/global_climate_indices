@@ -1,0 +1,65 @@
+---
+title: "Relative Nino/Nina strengths based on ONI"
+author: "brouwern@gmail.com"
+date: "July 6, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 
+
+From http://ggweather.com/enso/oni.htm
+"The Oceanic Niño Index (ONI) has become the de-facto standard that NOAA uses for identifying El Niño (warm) and La Niña (cool) events in the tropical Pacific.  It is the running 3-month mean SST anomaly for the Niño 3.4 region (i.e., 5oN-5oS, 120o-170oW).  Events are defined as 5 consecutive overlapping 3-month periods at or above the +0.5o anomaly for warm (El Niño) events and at or below the -0.5 anomaly for cold (La Niña) events.  The threshold is further broken down into Weak (with a 0.5 to 0.9 SST anomaly), Moderate (1.0 to 1.4), Strong (1.5 to 1.9) and Very Strong (≥ 2.0) events.  For the purpose of this report for an event to be categorized as weak, moderate, strong or very strong it must have equaled or exceeded the threshold for at least 3 consecutive overlapping 3-month periods. [* Important note: This list was changed in July 2015 to reflect the use of ERSSTv4 by CPC in the calculation of Sea Surface Temperatures (SST)."
+
+
+
+## Libraries
+```{r}
+library(ggplot2)
+library(stringr)
+```
+
+
+
+## Load table of relative strengtsh
+```{r}
+nino.rel.str <- read.csv(file = "./data/data_in/relative_nino_strenths_ONI.csv",
+                    skip = 3)
+```
+
+
+## Designate begining and ending year
+
+```{r}
+temp <- str_split(nino.rel.str$years,"-",simplify = T)
+
+
+nino.rel.str$year.start <- as.numeric(temp[,1])
+
+century <- gsub("([12][901])([01-9][01-9])","\\1", nino.rel.str$year.start )
+
+nino.rel.str$year.end <- as.numeric(paste(century,temp[,2], sep = ""))
+
+```
+
+
+## Fix years around millenia
+
+```{r}
+i.millenia <- which(nino.rel.str$years == "1999-00")
+nino.rel.str[i.millenia,"year.end"] <- 2000
+
+
+```
+
+
+## Save
+
+```{r}
+write.csv(nino.rel.str, "./data/data_out/nino_relative_strength.csv", row.names = F)
+```
+
+

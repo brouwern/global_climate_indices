@@ -41,14 +41,8 @@ http://ggweather.com/enso/oni.htm
 library(data.table) #for download
 library(reshape2)   #calc. annual mean
 library(ggplot2)
-library(rprojroot)  #working directory management
 ```
 
-
-## Set up root diretory
-```{r}
-root <- rprojroot::is_rstudio_project
-```
 
 
 
@@ -103,7 +97,7 @@ file. <- paste("climate_index_SOI_", year, ".csv", sep = "")
 dir.  <- "./data/data_out"
 file. <- paste(dir.,file.,sep = "/")
 
-write.csv(SOI.all.yrs, file = file.)
+write.csv(SOI.all.yrs, file = file., row.names = F)
 ```
 
 Reload data
@@ -153,7 +147,7 @@ year <- paste(range(SOI.seasonal.means$yr),collapse = "_")
 #create filename
 file. <- paste("climate_index_SOI_seasonal_summary", year, ".csv", sep = "")
 file. <- paste(dir.,file., sep = "/")
-write.csv(SOI.seasonal.means, file = file.)
+write.csv(SOI.seasonal.means, file = file., row.names = F)
 ```
 
 
@@ -232,7 +226,7 @@ year <- paste(range(SOI.ann.summary$yr),collapse = "_")
 #create filename
 file. <- paste("climate_index_SOI_ann_summary", year, ".csv", sep = "")
 file. <- paste(dir.,file., sep = "/")
-write.csv(SOI.ann.summary, file = file.)
+write.csv(SOI.ann.summary, file = file., row.names = F)
 
 ```
 
