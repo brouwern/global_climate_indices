@@ -20,14 +20,17 @@ This script downloads and prepares the Southern Oscillation Index (SOI).
     + Season
     + Year
     
-    
+Note: there is an R package than can do most of this also.    
 
 ## Introduciton
+
+MEI was used by Lloyd et al 2015 as a predictor of bird abundance in southern Dominican republic, though it did not come out as a significant in any model.
 
 Lloyd et al 2015 PeerJ write
 
 "Once we identified the best model, "we examined whether we could further improve model fit by adding to the best model a parameter reflecting the average multivariate El Niño-Southern Oscillation (ENSO) index (MEI) during June to December prior to each banding session. We used lagged values from the previous June to December because they provided a measure of the relative strength of the ENSO event and thus the potential influence on rainfall during the wet and dry seasons preceding our banding sessions. As they build in strength, warm ENSO events are associated with anomalously dry conditions during the late wet season (September–October) and most of the subsequent dry season (November–March), and with anomalously wet conditions during the early wet season (April–July) of the following year as the event subsides (Chen & Taylor, 2002). We downloaded bimonthly MEI values from http://www.esrl.noaa.gov/psd/enso/mei/table.html for the June to December prior to each banding session, and averaged these values to produce a single average value for those six months, which we then added as a covariate to the best-fitting model. We determined whether addition of the MEI covariate improved model fit via a likelihood-ratio test."
 
+### References
 Lloyd et al 2015.  Assessing conservation status of resident and migrant birds on Hispaniola with mist-netting.  PeerJ. https://peerj.com/articles/1541/
 
 
@@ -66,7 +69,7 @@ https://www.esrl.noaa.gov/psd/enso/mei/rank.html
 
 ## Clean MEI data
 
-Data is downloaed in wide format and set up with months in pairs that overlap, december-january, january-february etc.  Perhpas this is some kind of running average.
+Data is downloaded in wide format and set up with months in pairs that overlap, december-january, january-february etc.  Perhaps this is some kind of running average.
 
 ### Set up column names
 
@@ -81,14 +84,33 @@ names(MEI.all.yrs) <- c("yr",
 ```
 
 
-## Calcualte season summaries
+
+### Melt MEI to long format
+
+```{r}
+MEI.melt <- melt(MEI.all.yrs,
+                 id.vars = "yr")
+
+names(MEI.melt)[dim(MEI.melt)[2]] <- "MEI"
+```
+
+
+
+Save  
+```{r}
+write.csv(MEI.melt, "./data/data_out/climate_index_MEI_monthly_running_values.csv")
+```
+
+
+## Calculate seasonal summaries
 
 ```{r}
 winter.means <- apply(MEI.all.yrs[,c("dec.jan","jan.feb","feb.mar")],1,mean)
 spring.means <- apply(MEI.all.yrs[,c("mar.apr","apr.may","may.jun")],1,mean)
 summer.means <- apply(MEI.all.yrs[,c("jun.jul","jul.aug","aug.sep")],1,mean)
 fall.means <- apply(MEI.all.yrs[,c("sep.oct","oct.nov","nov.dec")],1,mean)
-MEI.jun.dec.mean <- apply(MEI.all[,-c(1:7)], 1, mean)
+
+MEI.jun.dec.mean <- apply(MEI.all.yrs[,-c(1:7)], 1, mean)
 
 MEI.seasonal.means <- data.frame(yr = MEI.all.yrs$yr,
            MEI.mean.win = winter.means,
@@ -99,31 +121,20 @@ MEI.seasonal.means <- data.frame(yr = MEI.all.yrs$yr,
 ```
 
 
-```{r}
-#Determine year range
-year <- paste(range(MEI.seasonal.means$yr),collapse = "_")
-
-#create filename
-file. <- paste("climate_index_MEI_seasonal_summary", year, ".csv", sep = "")
-file. <- paste(dir.,file., sep = "/")
-write.csv(MEI.seasonal.means, file = file., row.names = F)
-```
-
-
 
 ### Calculate annual summaries
 
 ```{r}
-MEI.ann.mean <- apply(MEI.all[,-1], 1, mean)
-MEI.ann.max <- apply(MEI.all[,-1], 1, max)
-MEI.ann.min <- apply(MEI.all[,-1], 1, min)
+MEI.ann.mean <- apply(MEI.all.yrs[,-1], 1, mean)
+MEI.ann.max <- apply(MEI.all.yrs[,-1], 1, max)
+MEI.ann.min <- apply(MEI.all.yrs[,-1], 1, min)
 
 ```
 
 Compile annual summaries
 
 ```{r}
-MEI.ann.summary <- data.frame(yr = MEI.all$yr,
+MEI.ann.summary <- data.frame(MEI.seasonal.means,
            MEI.ann.mean,
            MEI.ann.max,
            MEI.ann.min)
@@ -131,13 +142,13 @@ MEI.ann.summary <- data.frame(yr = MEI.all$yr,
 ```
 
 
-Save annual summary
 ```{r}
 #Determine year range
-year <- paste(range(MEI.ann.summary$yr),collapse = "_")
+year <- paste(range(MEI.seasonal.means$yr),collapse = "_")
 
 #create filename
 file. <- paste("climate_index_MEI_annual_summary", year, ".csv", sep = "")
+dir.  <- "./data/data_out"
 file. <- paste(dir.,file., sep = "/")
 write.csv(MEI.ann.summary, file = file., row.names = F)
 ```

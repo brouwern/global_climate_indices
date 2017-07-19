@@ -56,7 +56,28 @@ colnames(NAO.all.yrs) <-c("yr",month.abb,"mean")
 ```
 
 
-## Calcualte season summaries
+## Set up annual data
+
+```{r}
+NAO.melt <- melt(NAO.all.yrs[, -14],
+                 id.vars = "yr")
+
+names(NAO.melt)[dim(NAO.melt)[2]] <- "NAO"
+```
+
+
+
+Save annual data
+```{r}
+write.csv(NAO.melt, 
+          file = "./data/data_out/climate_index_NAO_monthly_values.csv")
+```
+
+
+
+
+
+## Calcualte seasonal summaries
 
 ```{r}
 winter.means <- apply(NAO.all.yrs[,c("Jan","Feb","Mar")],1,mean)
@@ -73,18 +94,6 @@ NAO.seasonal.means <- data.frame(yr = NAO.all.yrs$yr,
 ```
 
 
-```{r}
-#Determine year range
-year <- paste(range(NAO.seasonal.means$yr),collapse = "_")
-
-#create filename
-file. <- paste("climate_index_SOA_seasonal_summary", year, ".csv", sep = "")
-file. <- paste(dir.,file., sep = "/")
-write.csv(NAO.seasonal.means, file = file., row.names = F)
-```
-
-
-
 
 ### Calculate annual summaries
 
@@ -98,6 +107,7 @@ Compile annual summaries
 
 ```{r}
 NAO.ann.summary <- data.frame(yr = NAO.all.yrs$yr,
+           NAO.seasonal.means[,-1],
            NAO.ann.mean = NAO.all.yrs$mean,
            NAO.ann.max,
            NAO.ann.min)
@@ -108,10 +118,11 @@ NAO.ann.summary <- data.frame(yr = NAO.all.yrs$yr,
 Save annual summary
 ```{r}
 #Determine year range
-year <- paste(range(MEI.ann.summary$yr),collapse = "_")
+year. <- paste(range(NAO.ann.summary$yr),collapse = "_")
 
 #create filename
-file. <- paste("climate_index_NOA_annual_summary", year, ".csv", sep = "")
+file. <- paste("climate_index_NAO_annual_summary", year., ".csv", sep = "")
+dir.  <- "./data/data_out"
 file. <- paste(dir.,file., sep = "/")
 write.csv(NAO.ann.summary, file = file., row.names = F)
 ```
