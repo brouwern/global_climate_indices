@@ -56,7 +56,7 @@ colnames(NAO.all.yrs) <-c("yr",month.abb,"mean")
 ```
 
 
-## Set up annual data
+## Set up monthly data
 
 ```{r}
 NAO.melt <- melt(NAO.all.yrs[, -14],
