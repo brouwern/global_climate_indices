@@ -66,11 +66,17 @@ names(NAO.melt)[dim(NAO.melt)[2]] <- "NAO"
 ```
 
 
+```{r}
+names(NAO.melt)[2] <- "mo.char"
+```
+
+
 
 Save annual data
 ```{r}
 write.csv(NAO.melt, 
-          file = "./data/data_out/climate_index_NAO_monthly_values.csv")
+          file = "./data/data_out/climate_index_NAO_monthly_values.csv",
+          row.names = F)
 ```
 
 

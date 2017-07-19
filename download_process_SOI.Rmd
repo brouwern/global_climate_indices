@@ -58,7 +58,7 @@ SOI.all.yrs <- fread('https://www.ncdc.noaa.gov/teleconnections/enso/indicators/
 
 ## Look at data
 
-SOI data are monthly.
+SOI data are monthly (Sor are NAO; MEI is a 2-monthly running value)
 
 ```{r}
 head(SOI.all.yrs)
@@ -81,10 +81,16 @@ SOI.all.yrs$yr <- gsub("^([12][1-90][1-90][1-90])(.*)",
 SOI.all.yrs$yr <- as.numeric(SOI.all.yrs$yr)
 
 #Extract month
-SOI.all.yrs$mo <- gsub("^([12][1-90][1-90][1-90])(.*)",
+SOI.all.yrs$mo.no.char <- gsub("^([12][1-90][1-90][1-90])(.*)",
                  "\\2",SOI.all.yrs$Date)
 
+
+SOI.all.yrs$mo.no <- as.numeric(gsub("^[0]","",SOI.all.yrs$mo.no) )
+SOI.all.yrs$mo.char <- month.abb[SOI.all.yrs$mo.no]
 ```
+
+
+
 
 ## Save full time series
 
@@ -93,7 +99,7 @@ SOI.all.yrs$mo <- gsub("^([12][1-90][1-90][1-90])(.*)",
 year <- paste(range(SOI.all.yrs$yr),collapse = "_")
 
 #create filename
-file. <- paste("climate_index_SOI_", year, ".csv", sep = "")
+file. <- paste("climate_index_SOI_monthly_values", year, ".csv", sep = "")
 dir.  <- "./data/data_out"
 file. <- paste(dir.,file.,sep = "/")
 
@@ -122,7 +128,7 @@ Reshape by month
 ```{r}
 #calc mean
 SOI.months.wide <- dcast(data = SOI.all.yrs.2,
-      formula = yr ~ mo,
+      formula = yr ~ mo.no,
       value.var = "Value",
       fun.aggregate = sum)
 
@@ -138,19 +144,6 @@ SOI.seasonal.means <- data.frame(yr = SOI.months.wide$yr,
            SOI.mean.fal = fall.means)
 
 ```
-
-
-```{r}
-#Determine year range
-year <- paste(range(SOI.seasonal.means$yr),collapse = "_")
-
-#create filename
-file. <- paste("climate_index_SOI_seasonal_summary", year, ".csv", sep = "")
-file. <- paste(dir.,file., sep = "/")
-write.csv(SOI.seasonal.means, file = file., row.names = F)
-```
-
-
 
 
 
@@ -194,6 +187,21 @@ Compile summaries
 ```{r}
 SOI.ann.summary <- merge(SOI.mean, SOI.max)
 SOI.ann.summary <- merge(SOI.ann.summary, SOI.min)
+SOI.ann.summary <-merge(SOI.ann.summary,SOI.seasonal.means)
+
+```
+
+### Save annual summary
+
+```{r}
+#Determine year range
+year <- paste(range(SOI.ann.summary$yr),collapse = "_")
+
+#create filename
+file. <- paste("climate_index_SOI_annual_summary", year, ".csv", sep = "")
+dir. <- "./data/data_out"
+file. <- paste(dir.,file., sep = "/")
+write.csv(SOI.ann.summary, file = file., row.names = F)
 
 ```
 
@@ -216,17 +224,4 @@ qplot(y = SOI.mean,
 ```
 
 
-
-### Save annual means
-
-```{r}
-#Determine year range
-year <- paste(range(SOI.ann.summary$yr),collapse = "_")
-
-#create filename
-file. <- paste("climate_index_SOI_ann_summary", year, ".csv", sep = "")
-file. <- paste(dir.,file., sep = "/")
-write.csv(SOI.ann.summary, file = file., row.names = F)
-
-```
 
