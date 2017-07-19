@@ -73,6 +73,9 @@ abline(h = -1, col = 2)
 SOI has year and month concatenated into a single column.
 
 ```{r}
+names(SOI.all.yrs)[1] <- "soi.date.orig"
+names(SOI.all.yrs)[2] <- "soi"
+
 #Extract year
 SOI.all.yrs$yr <- gsub("^([12][1-90][1-90][1-90])(.*)",
                  "\\1",SOI.all.yrs$Date)
